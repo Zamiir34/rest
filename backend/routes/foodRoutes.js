@@ -12,7 +12,7 @@ router.get('/:id', foodController.getFood);
 router.post(
   '/',
   protect,
-  authorize('super_admin', 'restaurant_admin', 'manager'),
+  authorize('super_admin', 'restaurant_admin', 'manager', 'cashier'),
   upload.array('images', 5),
   foodController.createFood
 );
@@ -20,7 +20,7 @@ router.post(
 router.put(
   '/:id',
   protect,
-  authorize('super_admin', 'restaurant_admin', 'manager'),
+  authorize('super_admin', 'restaurant_admin', 'manager', 'cashier'),
   upload.array('images', 5),
   foodController.updateFood
 );
@@ -28,7 +28,7 @@ router.put(
 router.delete(
   '/:id',
   protect,
-  authorize('super_admin', 'restaurant_admin', 'manager'),
+  authorize('super_admin', 'restaurant_admin', 'manager', 'cashier'),
   foodController.deleteFood
 );
 

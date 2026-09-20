@@ -37,6 +37,10 @@ exports.createFood = asyncHandler(async (req, res) => {
   const data = { ...req.body, createdBy: req.user._id };
   if (req.files?.length) {
     data.images = await uploadMultiple(req.files, 'foods');
+  } else if (req.body.imageUrl) {
+    data.images = [req.body.imageUrl];
+  } else if (typeof req.body.images === 'string' && req.body.images.startsWith('http')) {
+    data.images = [req.body.images];
   }
   const food = await Food.create(data);
   res.status(201).json({ success: true, data: food });
@@ -49,7 +53,9 @@ exports.updateFood = asyncHandler(async (req, res) => {
   Object.assign(food, req.body);
   if (req.files?.length) {
     const newImages = await uploadMultiple(req.files, 'foods');
-    food.images = [...(food.images || []), ...newImages];
+    food.images = [...newImages];
+  } else if (req.body.imageUrl) {
+    food.images = [req.body.imageUrl];
   }
   await food.save();
   res.json({ success: true, data: food });

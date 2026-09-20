@@ -10,6 +10,7 @@ import Badge from '../../components/Badge';
 import SearchInput from '../../components/SearchInput';
 import { formatCurrency } from '../../utils/constants';
 import { PageLoader, Skeleton } from '../../components/LoadingSpinner';
+import { getFoodImageUrl, handleImageError } from '../../utils/imageUtils';
 
 const CustomerMenu = () => {
   const { tableNumber } = useParams();
@@ -118,10 +119,17 @@ const CustomerMenu = () => {
               whileTap={{ scale: 0.98 }}
               className="ds-card-hover overflow-hidden !p-0"
             >
-              <div className="relative">
-                <img src={food.images?.[0] || 'https://placehold.co/400x200?text=Food'} alt={food.name} className="w-full h-44 object-cover" />
+              <div className="relative overflow-hidden group">
+                <img
+                  src={getFoodImageUrl(food)}
+                  alt={food.name}
+                  loading="lazy"
+                  onError={(e) => handleImageError(e, food)}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 {food.isPopular && (
-                  <span className="absolute top-3 left-3">
+                  <span className="absolute top-3 left-3 shadow-md">
                     <Badge variant="primary">Popular</Badge>
                   </span>
                 )}

@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const http = require('http');
 const { Server } = require('socket.io');
 const swaggerUi = require('swagger-ui-express');
@@ -56,6 +57,7 @@ app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
