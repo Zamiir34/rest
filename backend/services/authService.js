@@ -29,7 +29,7 @@ const register = async ({ name, email, password, role, phone }) => {
 };
 
 const login = async ({ email, password }) => {
-  const user = await User.findOne({ email }).select('+password +refreshToken');
+  const user = await User.findOne({ email }).select('+password +refreshToken').populate('restaurantId');
   if (!user || !(await user.comparePassword(password))) {
     throw new ApiError(401, 'Invalid email or password');
   }
@@ -48,7 +48,7 @@ const refreshAccessToken = async (refreshToken) => {
   if (!refreshToken) throw new ApiError(401, 'Refresh token required');
 
   const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-  const user = await User.findById(decoded.id).select('+refreshToken');
+  const user = await User.findById(decoded.id).select('+refreshToken').populate('restaurantId');
   if (!user || user.refreshToken !== refreshToken) {
     throw new ApiError(401, 'Invalid refresh token');
   }

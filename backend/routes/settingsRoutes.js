@@ -3,9 +3,11 @@ const settingsController = require('../controllers/settingsController');
 const protect = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
 
+const optionalAuth = require('../middleware/optionalAuth');
+
 const router = express.Router();
 
-router.get('/', settingsController.getSettings);
+router.get('/', optionalAuth, settingsController.getSettings);
 
 router.use(protect);
 

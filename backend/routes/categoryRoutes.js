@@ -3,10 +3,12 @@ const categoryController = require('../controllers/categoryController');
 const protect = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
 
+const optionalAuth = require('../middleware/optionalAuth');
+
 const router = express.Router();
 
-router.get('/', categoryController.getCategories);
-router.get('/:id', categoryController.getCategory);
+router.get('/', optionalAuth, categoryController.getCategories);
+router.get('/:id', optionalAuth, categoryController.getCategory);
 
 router.post(
   '/',

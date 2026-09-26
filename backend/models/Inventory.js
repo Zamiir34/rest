@@ -13,6 +13,7 @@ const inventorySchema = new mongoose.Schema(
     expiryDate: { type: Date },
     category: { type: String },
     isActive: { type: Boolean, default: true },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
     lastRestocked: { type: Date },
   },
   { timestamps: true }

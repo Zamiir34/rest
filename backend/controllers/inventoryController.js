@@ -4,9 +4,23 @@ const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
 const { createNotification } = require('../services/notificationService');
 
+// Helper: get restaurantId filter based on user role
+const getRestaurantFilter = (user, query) => {
+  const queryRestId = query?.restaurantId || query?.restaurant;
+  if (queryRestId) return { restaurant: queryRestId };
+
+  if (!user) return {};
+  if (user.role === 'super_admin') {
+    return queryRestId ? { restaurant: queryRestId } : {};
+  }
+  const restId = user.restaurantId?._id || user.restaurantId;
+  if (restId) return { restaurant: restId };
+  return { restaurant: null };
+};
+
 exports.getInventory = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
-  const filter = { isActive: true };
+  const filter = { ...getRestaurantFilter(req.user, req.query), isActive: true };
   if (req.query.lowStock === 'true') {
     filter.$expr = { $lte: ['$quantity', '$minStock'] };
   }
@@ -23,7 +37,16 @@ exports.getInventory = asyncHandler(async (req, res) => {
 });
 
 exports.createInventory = asyncHandler(async (req, res) => {
-  const item = await Inventory.create(req.body);
+  const restaurantId =
+    req.user.role !== 'super_admin'
+      ? req.user.restaurantId?._id || req.user.restaurantId
+      : req.body.restaurant || req.user.restaurantId?._id || req.user.restaurantId;
+
+  const data = {
+    ...req.body,
+    restaurant: restaurantId,
+  };
+  const item = await Inventory.create(data);
   res.status(201).json({ success: true, data: item });
 });
 

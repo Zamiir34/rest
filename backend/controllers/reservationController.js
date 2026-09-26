@@ -5,9 +5,23 @@ const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
 const { createNotification } = require('../services/notificationService');
 
+// Helper: get restaurantId filter based on user role
+const getRestaurantFilter = (user, query) => {
+  const queryRestId = query?.restaurantId || query?.restaurant;
+  if (queryRestId) return { restaurant: queryRestId };
+
+  if (!user) return {};
+  if (user.role === 'super_admin') {
+    return queryRestId ? { restaurant: queryRestId } : {};
+  }
+  const restId = user.restaurantId?._id || user.restaurantId;
+  if (restId) return { restaurant: restId };
+  return { restaurant: null };
+};
+
 exports.getReservations = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
-  const filter = {};
+  const filter = { ...getRestaurantFilter(req.user, req.query) };
   if (req.query.status) filter.status = req.query.status;
   if (req.query.date) {
     const date = new Date(req.query.date);
@@ -25,8 +39,14 @@ exports.getReservations = asyncHandler(async (req, res) => {
 });
 
 exports.createReservation = asyncHandler(async (req, res) => {
+  const restaurantId =
+    req.user?.role !== 'super_admin'
+      ? req.user?.restaurantId?._id || req.user?.restaurantId
+      : req.body.restaurant || req.user?.restaurantId?._id || req.user?.restaurantId;
+
   const reservation = await Reservation.create({
     ...req.body,
+    restaurant: restaurantId,
     createdBy: req.user?._id,
   });
 

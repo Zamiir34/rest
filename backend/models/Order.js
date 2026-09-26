@@ -52,6 +52,7 @@ const orderSchema = new mongoose.Schema(
       default: 'unpaid',
     },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
     completedAt: { type: Date },
   },
   { timestamps: true }

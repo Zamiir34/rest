@@ -34,7 +34,7 @@ const userSchema = new mongoose.Schema(
     resetPasswordExpire: { type: Date, select: false },
     restaurantId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Settings',
+      ref: 'Restaurant',
     },
   },
   { timestamps: true }

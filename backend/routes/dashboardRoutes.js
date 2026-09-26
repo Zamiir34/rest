@@ -6,7 +6,7 @@ const authorize = require('../middleware/authorize');
 const router = express.Router();
 
 router.use(protect);
-router.use(authorize('super_admin', 'restaurant_admin', 'manager'));
+router.use(authorize('super_admin', 'restaurant_admin', 'manager', 'cashier'));
 
 router.get('/', dashboardController.getDashboard);
 router.get('/analytics', dashboardController.getAnalytics);

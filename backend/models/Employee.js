@@ -27,6 +27,7 @@ const employeeSchema = new mongoose.Schema(
       },
     ],
     isActive: { type: Boolean, default: true },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
   },
   { timestamps: true }
 );

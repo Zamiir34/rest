@@ -4,9 +4,23 @@ const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
 const { uploadMultiple } = require('../services/cloudinaryService');
 
+// Helper: get restaurantId filter based on user role and query
+const getRestaurantFilter = (user, query) => {
+  const queryRestId = query?.restaurantId || query?.restaurant;
+  if (queryRestId) return { restaurant: queryRestId };
+
+  if (!user) return {};
+  if (user.role === 'super_admin') {
+    return queryRestId ? { restaurant: queryRestId } : {};
+  }
+  const restId = user.restaurantId?._id || user.restaurantId;
+  if (restId) return { restaurant: restId };
+  return { restaurant: null }; // no data for users without a restaurant
+};
+
 exports.getFoods = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
-  const filter = {};
+  const filter = { ...getRestaurantFilter(req.user, req.query) };
 
   if (req.query.category) filter.category = req.query.category;
   if (req.query.isAvailable !== undefined) filter.isAvailable = req.query.isAvailable === 'true';
@@ -34,7 +48,16 @@ exports.getFood = asyncHandler(async (req, res) => {
 });
 
 exports.createFood = asyncHandler(async (req, res) => {
-  const data = { ...req.body, createdBy: req.user._id };
+  const restaurantId =
+    req.user.role !== 'super_admin'
+      ? req.user.restaurantId?._id || req.user.restaurantId
+      : req.body.restaurant || req.user.restaurantId?._id || req.user.restaurantId;
+
+  const data = {
+    ...req.body,
+    createdBy: req.user._id,
+    restaurant: restaurantId,
+  };
   if (req.files?.length) {
     data.images = await uploadMultiple(req.files, 'foods');
   } else if (req.body.imageUrl) {

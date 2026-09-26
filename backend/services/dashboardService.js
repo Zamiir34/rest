@@ -28,24 +28,44 @@ const getDateRange = (period) => {
   return { start, end: now };
 };
 
-const getDashboardStats = async (period = 'daily') => {
-  const { start, end } = getDateRange(period);
+const mongoose = require('mongoose');
 
-  const [orders, payments, customers, foods, inventory, employees] =
+const getDashboardStats = async (period = 'daily', restaurantId = null) => {
+  const { start, end } = getDateRange(period);
+  const restObjectId = restaurantId ? new mongoose.Types.ObjectId(String(restaurantId)) : null;
+  const restFilter = restObjectId ? { restaurant: restObjectId } : {};
+
+  const [orders, customers, foods, inventory, employees, revenueAgg, salesByDay] =
     await Promise.all([
-      Order.find({ createdAt: { $gte: start, $lte: end } }),
-      Payment.find({ createdAt: { $gte: start, $lte: end }, status: 'completed' }),
-      Customer.countDocuments({ createdAt: { $gte: start, $lte: end } }),
-      Food.countDocuments({ isAvailable: true }),
-      Inventory.find({ isActive: true }),
-      Employee.countDocuments({ isActive: true }),
+      Order.find({ createdAt: { $gte: start, $lte: end }, ...restFilter }),
+      Customer.countDocuments({ createdAt: { $gte: start, $lte: end }, ...(restObjectId ? { restaurant: restObjectId } : {}) }),
+      Food.countDocuments({ isAvailable: true, ...restFilter }),
+      Inventory.find({ isActive: true, ...restFilter }),
+      Employee.countDocuments({ isActive: true, ...restFilter }),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: start, $lte: end }, paymentStatus: 'paid', ...restFilter } },
+        { $group: { _id: null, total: { $sum: '$total' } } },
+      ]),
+      Order.aggregate([
+        { $match: { createdAt: { $gte: start, $lte: end }, paymentStatus: 'paid', ...restFilter } },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            revenue: { $sum: '$total' },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]),
     ]);
 
-  const revenue = payments.reduce((sum, p) => sum + p.amount, 0);
+  const revenue = revenueAgg[0]?.total || 0;
   const lowStockItems = inventory.filter((i) => i.quantity <= i.minStock);
 
+  const orderMatch = { createdAt: { $gte: start, $lte: end }, ...restFilter };
+
   const popularFoods = await Order.aggregate([
-    { $match: { createdAt: { $gte: start, $lte: end } } },
+    { $match: orderMatch },
     { $unwind: '$items' },
     {
       $group: {
@@ -59,19 +79,7 @@ const getDashboardStats = async (period = 'daily') => {
     { $limit: 5 },
   ]);
 
-  const salesByDay = await Payment.aggregate([
-    { $match: { createdAt: { $gte: start, $lte: end }, status: 'completed' } },
-    {
-      $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-        revenue: { $sum: '$amount' },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { _id: 1 } },
-  ]);
-
-  const recentOrders = await Order.find()
+  const recentOrders = await Order.find(restFilter)
     .sort({ createdAt: -1 })
     .limit(10)
     .populate('table');

@@ -10,6 +10,7 @@ router.get('/public/order/:orderId/invoice', paymentController.getPublicInvoiceB
 router.use(protect);
 router.use(authorize('super_admin', 'restaurant_admin', 'manager', 'cashier'));
 
+router.get('/daily-summary', paymentController.getDailySummary);
 router.get('/', paymentController.getPayments);
 router.post('/', paymentController.processPayment);
 router.post('/split', paymentController.splitBill);

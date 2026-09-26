@@ -118,3 +118,58 @@ exports.splitBill = asyncHandler(async (req, res) => {
 
   res.status(201).json({ success: true, data: payment });
 });
+
+exports.getDailySummary = asyncHandler(async (req, res) => {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date();
+
+  const payments = await Payment.find({
+    createdAt: { $gte: start, $lte: end },
+    status: 'completed',
+  })
+    .populate({
+      path: 'order',
+      select: 'orderNumber tableNumber customerName total orderType status',
+    })
+    .populate('processedBy', 'name email')
+    .sort('-createdAt');
+
+  const totalIncome = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+  const totalTransactions = payments.length;
+  const totalDiscount = payments.reduce((sum, p) => sum + (p.discount || 0), 0);
+  const totalTax = payments.reduce((sum, p) => sum + (p.tax || 0), 0);
+  const totalTip = payments.reduce((sum, p) => sum + (p.tip || 0), 0);
+
+  const methodBreakdown = {
+    cash: { amount: 0, count: 0 },
+    evc_plus: { amount: 0, count: 0 },
+    sahal: { amount: 0, count: 0 },
+    premier_wallet: { amount: 0, count: 0 },
+    credit_card: { amount: 0, count: 0 },
+  };
+
+  payments.forEach((p) => {
+    const m = p.method || 'cash';
+    if (!methodBreakdown[m]) {
+      methodBreakdown[m] = { amount: 0, count: 0 };
+    }
+    methodBreakdown[m].amount += (p.amount || 0);
+    methodBreakdown[m].count += 1;
+  });
+
+  res.json({
+    success: true,
+    data: {
+      date: new Date().toISOString().slice(0, 10),
+      totalIncome,
+      totalTransactions,
+      totalDiscount,
+      totalTax,
+      totalTip,
+      methodBreakdown,
+      payments,
+    },
+  });
+});
+

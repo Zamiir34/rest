@@ -9,6 +9,7 @@ const supplierSchema = new mongoose.Schema(
     address: { type: String },
     isActive: { type: Boolean, default: true },
     notes: { type: String },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
   },
   { timestamps: true }
 );

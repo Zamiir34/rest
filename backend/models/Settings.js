@@ -2,6 +2,11 @@ const mongoose = require('mongoose');
 
 const settingsSchema = new mongoose.Schema(
   {
+    restaurant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Restaurant',
+      index: true,
+    },
     restaurantName: { type: String, default: 'Restaurant POS' },
     logo: { type: String },
     address: { type: String },

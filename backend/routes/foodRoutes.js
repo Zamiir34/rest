@@ -4,10 +4,12 @@ const protect = require('../middleware/auth');
 const authorize = require('../middleware/authorize');
 const upload = require('../middleware/upload');
 
+const optionalAuth = require('../middleware/optionalAuth');
+
 const router = express.Router();
 
-router.get('/', foodController.getFoods);
-router.get('/:id', foodController.getFood);
+router.get('/', optionalAuth, foodController.getFoods);
+router.get('/:id', optionalAuth, foodController.getFood);
 
 router.post(
   '/',

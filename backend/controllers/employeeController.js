@@ -4,9 +4,23 @@ const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
 
+// Helper: get restaurantId filter based on user role
+const getRestaurantFilter = (user, query) => {
+  const queryRestId = query?.restaurantId || query?.restaurant;
+  if (queryRestId) return { restaurant: queryRestId };
+
+  if (!user) return {};
+  if (user.role === 'super_admin') {
+    return queryRestId ? { restaurant: queryRestId } : {};
+  }
+  const restId = user.restaurantId?._id || user.restaurantId;
+  if (restId) return { restaurant: restId };
+  return { restaurant: null };
+};
+
 exports.getEmployees = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
-  const filter = { isActive: true };
+  const filter = { ...getRestaurantFilter(req.user, req.query), isActive: true };
 
   const [employees, total] = await Promise.all([
     Employee.find(filter)
@@ -31,9 +45,17 @@ exports.getEmployee = asyncHandler(async (req, res) => {
 
 exports.createEmployee = asyncHandler(async (req, res) => {
   const { name, email, password, role, phone, ...employeeData } = req.body;
+  const restaurantId =
+    req.user.role !== 'super_admin'
+      ? req.user.restaurantId?._id || req.user.restaurantId
+      : req.body.restaurantId || req.body.restaurant || req.user.restaurantId?._id || req.user.restaurantId;
 
-  const user = await User.create({ name, email, password, role, phone });
-  const employee = await Employee.create({ user: user._id, ...employeeData });
+  const user = await User.create({ name, email, password, role, phone, restaurantId });
+  const employee = await Employee.create({
+    user: user._id,
+    restaurant: restaurantId,
+    ...employeeData,
+  });
   await employee.populate('user', '-password');
 
   res.status(201).json({ success: true, data: employee });

@@ -10,9 +10,23 @@ const generateQR = async (tableNumber) => {
   return { url, qrCode };
 };
 
+// Helper: get restaurantId filter based on user role
+const getRestaurantFilter = (user, query) => {
+  const queryRestId = query?.restaurantId || query?.restaurant;
+  if (queryRestId) return { restaurant: queryRestId };
+
+  if (!user) return {};
+  if (user.role === 'super_admin') {
+    return queryRestId ? { restaurant: queryRestId } : {};
+  }
+  const restId = user.restaurantId?._id || user.restaurantId;
+  if (restId) return { restaurant: restId };
+  return { restaurant: null };
+};
+
 exports.getTables = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
-  const filter = {};
+  const filter = { ...getRestaurantFilter(req.user, req.query) };
   if (req.query.status) filter.status = req.query.status;
 
   const [tables, total] = await Promise.all([
@@ -31,8 +45,13 @@ exports.getTable = asyncHandler(async (req, res) => {
 
 exports.createTable = asyncHandler(async (req, res) => {
   const { qrCode, url } = await generateQR(req.body.tableNumber);
+  const restaurantId =
+    req.user.role !== 'super_admin'
+      ? req.user.restaurantId?._id || req.user.restaurantId
+      : req.body.restaurant || req.user.restaurantId?._id || req.user.restaurantId;
   const table = await Table.create({
     ...req.body,
+    restaurant: restaurantId,
     qrCode,
     qrCodeUrl: url,
   });

@@ -4,9 +4,23 @@ const Order = require('../models/Order');
 const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
 
+// Helper: get restaurantId filter based on user role
+const getRestaurantFilter = (user, query) => {
+  const queryRestId = query?.restaurantId || query?.restaurant;
+  if (queryRestId) return { restaurant: queryRestId };
+
+  if (!user) return {};
+  if (user.role === 'super_admin') {
+    return queryRestId ? { restaurant: queryRestId } : {};
+  }
+  const restId = user.restaurantId?._id || user.restaurantId;
+  if (restId) return { restaurant: restId };
+  return { restaurant: null };
+};
+
 exports.getCustomers = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
-  const filter = {};
+  const filter = { ...getRestaurantFilter(req.user, req.query) };
   if (req.query.search) {
     filter.$or = [
       { name: { $regex: req.query.search, $options: 'i' } },

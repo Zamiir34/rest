@@ -16,6 +16,7 @@ const reservationSchema = new mongoose.Schema(
     },
     specialRequests: { type: String },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
   },
   { timestamps: true }
 );

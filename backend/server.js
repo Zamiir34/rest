@@ -30,6 +30,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const restaurantRoutes = require('./routes/restaurantRoutes');
 
 connectDB();
 
@@ -87,6 +88,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/restaurants', restaurantRoutes);
 
 app.use(errorHandler);
 

@@ -9,6 +9,7 @@ const customerSchema = new mongoose.Schema(
     totalSpending: { type: Number, default: 0 },
     orderCount: { type: Number, default: 0 },
     lastOrderAt: { type: Date },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
   },
   { timestamps: true }
 );

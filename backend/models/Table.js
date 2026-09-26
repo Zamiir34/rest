@@ -13,6 +13,7 @@ const tableSchema = new mongoose.Schema(
     qrCodeUrl: { type: String },
     location: { type: String },
     isActive: { type: Boolean, default: true },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
   },
   { timestamps: true }
 );

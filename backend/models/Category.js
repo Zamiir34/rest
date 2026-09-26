@@ -13,6 +13,7 @@ const categorySchema = new mongoose.Schema(
     image: { type: String },
     isActive: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
+    restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
   },
   { timestamps: true }
 );
