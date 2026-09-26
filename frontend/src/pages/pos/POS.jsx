@@ -1,12 +1,15 @@
 import { useEffect, useState, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   FiSearch, FiPrinter, FiCreditCard, FiPercent, FiGift, 
-  FiChevronDown, FiCheckCircle, FiBell, FiX, FiSend, FiCoffee, FiUser, FiPhone 
+  FiChevronDown, FiCheckCircle, FiBell, FiX, FiSend, FiCoffee, FiUser, FiPhone,
+  FiDollarSign, FiTrendingUp, FiPieChart, FiRefreshCw, FiCalendar, FiBarChart2, FiArrowRight
 } from 'react-icons/fi';
 import api from '../../services/api';
 import { PageLoader } from '../../components/LoadingSpinner';
-import { formatCurrency, formatDateTime, STATUS_COLORS, PAYMENT_METHODS } from '../../utils/constants';
+import { formatCurrency, formatDate, formatDateTime, STATUS_COLORS, PAYMENT_METHODS } from '../../utils/constants';
 import { connectSocket } from '../../services/socket';
 
 const playOrderChime = () => {
@@ -57,13 +60,20 @@ const playOrderChime = () => {
 };
 
 const POS = () => {
+  const { user } = useSelector((state) => state.auth);
   const [orders, setOrders]           = useState([]);
   const [selected, setSelected]       = useState(null);
   const [lastPayment, setLastPayment] = useState(null);
   const [search, setSearch]           = useState('');
   const [loading, setLoading]         = useState(true);
   const [payment, setPayment]         = useState({ method: 'cash', discount: 0, tip: 0 });
-  const [settings, setSettings]       = useState({ restaurantName: 'Savory Bites', address: '', phone: '', email: '' });
+  const [settings, setSettings]       = useState({ restaurantName: user?.restaurantId?.name || '', address: '', phone: '', email: '' });
+
+  // Daily Income state
+  const [dailySummary, setDailySummary]       = useState(null);
+  const [showIncomeModal, setShowIncomeModal] = useState(false);
+  const [loadingSummary, setLoadingSummary]   = useState(false);
+  const [summaryFilter, setSummaryFilter]     = useState('all');
 
   // Order slip & auto-print states
   const [incomingOrder, setIncomingOrder] = useState(null);
@@ -90,6 +100,18 @@ const POS = () => {
     const { data } = await api.get(`/orders?search=${search}&paymentStatus=unpaid&limit=50`);
     setOrders(data.data);
     setLoading(false);
+  };
+
+  const fetchDailySummary = async () => {
+    try {
+      setLoadingSummary(true);
+      const { data } = await api.get('/payments/daily-summary');
+      setDailySummary(data.data);
+    } catch (err) {
+      console.error('Failed to fetch daily summary:', err);
+    } finally {
+      setLoadingSummary(false);
+    }
   };
 
   const handlePrintInvoice = () => {
@@ -127,6 +149,7 @@ const POS = () => {
     }).catch(() => {});
 
     fetchOrders();
+    fetchDailySummary();
     const socket = connectSocket();
     socket.emit('join_pos');
 
@@ -139,13 +162,18 @@ const POS = () => {
       }
     };
 
+    const onPaymentProcessed = () => {
+      fetchOrders();
+      fetchDailySummary();
+    };
+
     socket.on('new_order', onNewOrder);
-    socket.on('payment_processed', fetchOrders);
+    socket.on('payment_processed', onPaymentProcessed);
     socket.on('order_status_updated', fetchOrders);
 
     return () => { 
       socket.off('new_order', onNewOrder); 
-      socket.off('payment_processed', fetchOrders); 
+      socket.off('payment_processed', onPaymentProcessed); 
       socket.off('order_status_updated', fetchOrders);
     };
   }, [search]);
@@ -160,6 +188,7 @@ const POS = () => {
     setLastPayment(data.data);
     setSelected(null);
     fetchOrders();
+    fetchDailySummary();
   };
 
   if (loading) return <PageLoader />;
@@ -168,7 +197,12 @@ const POS = () => {
     ? selected.total - (selected.total * payment.discount) / 100 + Number(payment.tip)
     : 0;
 
-  const restName = settings.restaurantName || 'Savory Bites';
+  const filteredPayments = (dailySummary?.payments || []).filter((p) => {
+    if (summaryFilter === 'all') return true;
+    return p.method === summaryFilter;
+  });
+
+  const restName = settings.restaurantName || user?.restaurantId?.name || 'Restaurant POS';
   const initials = restName.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 
   return (
@@ -597,6 +631,202 @@ const POS = () => {
             </motion.div>
           </div>
         )}
+
+        {/* ── Daily Restaurant Income Details Modal ─────────────────────────────── */}
+        {showIncomeModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5">
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 15 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+            >
+              {/* Modal Header */}
+              <div className="p-5 sm:p-6 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-700 text-white flex items-center justify-between">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white">
+                    <FiDollarSign size={26} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold tracking-tight">Dakhliga Maanta ee Maqayadda</h2>
+                    <p className="text-xs text-emerald-100 flex items-center gap-2 mt-0.5">
+                      <FiCalendar size={13} /> Tariikhda: {formatDate(new Date())} · Cashier Console
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowIncomeModal(false)}
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition"
+                >
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+                {/* 4 Overview Metric Cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60">
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">Dakhliga Guud</p>
+                    <p className="text-2xl font-black text-emerald-900 dark:text-emerald-200 mt-1">
+                      {formatCurrency(dailySummary?.totalIncome || 0)}
+                    </p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">Total Revenue</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/60">
+                    <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">Dalabyo La Bixiyay</p>
+                    <p className="text-2xl font-black text-blue-900 dark:text-blue-200 mt-1">
+                      {dailySummary?.totalTransactions || 0}
+                    </p>
+                    <p className="text-[11px] text-blue-600 dark:text-blue-400 mt-0.5">Completed Receipts</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-900/60">
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Cash-dhimis (Discounts)</p>
+                    <p className="text-2xl font-black text-amber-900 dark:text-amber-200 mt-1">
+                      {formatCurrency(dailySummary?.totalDiscount || 0)}
+                    </p>
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">Total Discounts</p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/60">
+                    <p className="text-xs font-semibold text-purple-700 dark:text-purple-400">Canshuurta (Tax)</p>
+                    <p className="text-2xl font-black text-purple-900 dark:text-purple-200 mt-1">
+                      {formatCurrency(dailySummary?.totalTax || 0)}
+                    </p>
+                    <p className="text-[11px] text-purple-600 dark:text-purple-400 mt-0.5">Total Taxes</p>
+                  </div>
+                </div>
+
+                {/* Method Breakdown Pills */}
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">
+                    Kala Saaridda Habka Lacag-bixinta (By Payment Method)
+                  </h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    {PAYMENT_METHODS.map((pm) => {
+                      const data = dailySummary?.methodBreakdown?.[pm.value] || { amount: 0, count: 0 };
+                      const isSelected = summaryFilter === pm.value;
+                      return (
+                        <button
+                          key={pm.value}
+                          type="button"
+                          onClick={() => setSummaryFilter(summaryFilter === pm.value ? 'all' : pm.value)}
+                          className={`p-3 rounded-2xl text-left border transition-all ${
+                            isSelected
+                              ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-500/30'
+                              : 'bg-gray-50 dark:bg-gray-800/60 hover:bg-gray-100 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                          }`}
+                        >
+                          <p className={`text-xs font-bold ${isSelected ? 'text-violet-100' : 'text-gray-500 dark:text-gray-400'}`}>
+                            {pm.label}
+                          </p>
+                          <p className={`text-base font-extrabold mt-1 ${isSelected ? 'text-white' : 'text-gray-900 dark:text-white'}`}>
+                            {formatCurrency(data.amount)}
+                          </p>
+                          <p className={`text-[10px] mt-0.5 ${isSelected ? 'text-violet-200' : 'text-gray-400'}`}>
+                            {data.count} transaction{data.count !== 1 ? 's' : ''}
+                          </p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Filter and Table of Today's Transactions */}
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      Liiska Lacagaha Maanta La Qaaday ({filteredPayments.length})
+                    </h3>
+                    {summaryFilter !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => setSummaryFilter('all')}
+                        className="text-xs text-violet-600 dark:text-violet-400 font-semibold hover:underline"
+                      >
+                        Muuji Dhammaan (Clear Filter)
+                      </button>
+                    )}
+                  </div>
+
+                  {filteredPayments.length === 0 ? (
+                    <div className="py-12 text-center border border-dashed border-gray-200 dark:border-gray-800 rounded-2xl text-gray-400 text-sm">
+                      Maanta weli ma jirto lacag-bixin la diiwaangeliyay.
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-800">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-gray-50 dark:bg-gray-800/80 text-gray-600 dark:text-gray-400 font-bold border-b border-gray-200 dark:border-gray-800">
+                          <tr>
+                            <th className="py-3 px-3.5">Waqtiga</th>
+                            <th className="py-3 px-3.5">Order / Invoice #</th>
+                            <th className="py-3 px-3.5">Miiska / Nooca</th>
+                            <th className="py-3 px-3.5">Habka</th>
+                            <th className="py-3 px-3.5">Cashier</th>
+                            <th className="py-3 px-3.5 text-right">Lacagta</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                          {filteredPayments.map((p) => {
+                            const methodObj = PAYMENT_METHODS.find((m) => m.value === p.method);
+                            return (
+                              <tr key={p._id} className="hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition">
+                                <td className="py-3 px-3.5 font-medium text-gray-500 dark:text-gray-400">
+                                  {formatDateTime(p.createdAt)}
+                                </td>
+                                <td className="py-3 px-3.5 font-bold text-gray-900 dark:text-white">
+                                  {p.order?.orderNumber || p.invoiceNumber || '—'}
+                                </td>
+                                <td className="py-3 px-3.5 text-gray-600 dark:text-gray-300">
+                                  {p.order?.tableNumber ? `Table ${p.order.tableNumber}` : (p.order?.orderType || 'Order')}
+                                </td>
+                                <td className="py-3 px-3.5">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                    {methodObj?.label || p.method}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-3.5 text-gray-600 dark:text-gray-300">
+                                  {p.processedBy?.name || 'Cashier'}
+                                </td>
+                                <td className="py-3 px-3.5 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
+                                  {formatCurrency(p.amount)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 bg-gray-50 dark:bg-gray-800/60 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
+                <Link
+                  to="/admin/reports"
+                  className="inline-flex items-center gap-2 text-xs font-bold text-violet-600 dark:text-violet-400 hover:text-violet-700 transition"
+                >
+                  <FiBarChart2 size={15} />
+                  <span>Daawo Warbixinnada Buuxa & Soo Deji PDF / Excel</span>
+                  <FiArrowRight size={14} />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setShowIncomeModal(false)}
+                  className="px-5 py-2.5 rounded-xl bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 text-xs font-bold transition"
+                >
+                  Xir (Close)
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
 
       {/* ── Main POS UI ──────────────────────────────────────────── */}
@@ -636,6 +866,78 @@ const POS = () => {
                 <FiPrinter size={15} /> Print Invoice
               </button>
             )}
+          </div>
+        </div>
+
+        {/* ── Daily Restaurant Income Banner ── */}
+        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-cyan-500/10 dark:from-emerald-950/40 dark:via-teal-950/20 dark:to-cyan-950/40 p-4 sm:p-5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            {/* Left: Total Income & Transaction Count */}
+            <div className="flex items-center gap-4">
+              <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 flex-shrink-0">
+                <FiDollarSign size={26} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-100/80 dark:bg-emerald-900/50 px-2 py-0.5 rounded-md border border-emerald-300/50 dark:border-emerald-700/50">
+                    Dakhliga Maanta ee Maqayadda
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                    · {formatDate(new Date())}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-3 mt-1">
+                  <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                    {formatCurrency(dailySummary?.totalIncome || 0)}
+                  </h2>
+                  <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                    ({dailySummary?.totalTransactions || 0} dalab la bixiyay maanta)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Method Breakdown & Actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              {dailySummary?.methodBreakdown && (
+                <div className="hidden sm:flex flex-wrap items-center gap-1.5 mr-1">
+                  {Object.entries(dailySummary.methodBreakdown)
+                    .filter(([_, v]) => v.amount > 0)
+                    .map(([method, val]) => (
+                      <div
+                        key={method}
+                        className="px-2.5 py-1 rounded-xl bg-white/80 dark:bg-gray-800/80 border border-gray-200/80 dark:border-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-200 flex items-center gap-1 shadow-2xs"
+                      >
+                        <span className="capitalize text-gray-500 dark:text-gray-400">
+                          {method.replace('_', ' ')}:
+                        </span>
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(val.amount)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowIncomeModal(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-500/20 transition cursor-pointer"
+              >
+                <FiPieChart size={14} />
+                <span>Faahfaahinta Dakhliga</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={fetchDailySummary}
+                disabled={loadingSummary}
+                className="p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition cursor-pointer"
+                title="Dib u cusbooneysii Dakhliga"
+              >
+                <FiRefreshCw size={14} className={loadingSummary ? 'animate-spin' : ''} />
+              </button>
+            </div>
           </div>
         </div>
 

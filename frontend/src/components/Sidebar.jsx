@@ -19,6 +19,7 @@ import {
   FiMapPin,
   FiArchive,
   FiShield,
+  FiServer,
 } from 'react-icons/fi';
 import { logout } from '../redux/slices/authSlice';
 import { toggleSidebar } from '../redux/slices/uiSlice';
@@ -26,13 +27,24 @@ import { ROLE_LABELS } from '../utils/constants';
 
 const navGroups = [
   {
+    label: 'Super Admin',
+    items: [
+      {
+        path: '/admin/restaurants',
+        icon: FiServer,
+        label: 'Maqayadaha (Restaurants)',
+        roles: ['super_admin'],
+      },
+    ],
+  },
+  {
     label: 'Operations',
     items: [
       {
         path: '/admin/dashboard',
         icon: FiHome,
         label: 'Dashboard',
-        roles: ['super_admin', 'restaurant_admin', 'manager'],
+        roles: ['super_admin', 'restaurant_admin', 'manager', 'cashier'],
       },
       {
         path: '/pos',
@@ -73,7 +85,7 @@ const navGroups = [
         path: '/admin/tables',
         icon: FiMapPin,
         label: 'Dining Tables',
-        roles: ['super_admin', 'restaurant_admin', 'manager'],
+        roles: ['super_admin', 'restaurant_admin', 'manager', 'cashier'],
       },
       {
         path: '/admin/customers',
@@ -108,7 +120,7 @@ const navGroups = [
         path: '/admin/reports',
         icon: FiBarChart2,
         label: 'Analytics & Reports',
-        roles: ['super_admin', 'restaurant_admin', 'manager'],
+        roles: ['super_admin', 'restaurant_admin', 'manager', 'cashier'],
       },
       {
         path: '/admin/settings',
@@ -158,13 +170,15 @@ const Sidebar = () => {
             <div className="p-5 border-b border-sidebar-border">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 text-slate-950 flex items-center justify-center font-black text-base shadow-lg shadow-primary-500/25">
-                    SB
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 text-slate-950 flex items-center justify-center font-black text-xs shadow-lg shadow-primary-500/25 shrink-0">
+                    {user?.restaurantId?.name ? user.restaurantId.name.substring(0, 2).toUpperCase() : (user?.role === 'super_admin' ? 'HQ' : 'POS')}
                   </div>
-                  <div>
-                    <h1 className="text-base font-extrabold text-white tracking-tight">Savory Bites</h1>
-                    <p className="text-[10px] uppercase tracking-widest text-primary-400 font-bold">
-                      Restaurant OS
+                  <div className="min-w-0 flex-1">
+                    <h1 className="text-sm font-extrabold text-white tracking-tight truncate" title={user?.restaurantId?.name || (user?.role === 'super_admin' ? 'Super Admin HQ' : 'Restaurant OS')}>
+                      {user?.restaurantId?.name || (user?.role === 'super_admin' ? 'Super Admin HQ' : 'Restaurant OS')}
+                    </h1>
+                    <p className="text-[10px] uppercase tracking-widest text-primary-400 font-bold truncate">
+                      {user?.restaurantId?.city ? `${user.restaurantId.city} • Branch` : (user?.role === 'super_admin' ? 'Global Platform' : 'Restaurant OS')}
                     </p>
                   </div>
                 </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { FiPlus, FiDownload, FiGrid, FiUsers, FiCheckCircle, FiX, FiHash } from 'react-icons/fi';
+import { useSelector } from 'react-redux';
+import { FiPlus, FiDownload, FiGrid, FiUsers, FiCheckCircle, FiX, FiHash, FiEdit2, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import { QRCodeSVG } from 'qrcode.react';
 import { useForm } from 'react-hook-form';
 import api from '../../services/api';

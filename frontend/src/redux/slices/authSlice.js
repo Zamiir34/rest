@@ -6,6 +6,8 @@ export const login = createAsyncThunk('auth/login', async (credentials, { reject
     const { data } = await api.post('/auth/login', credentials);
     localStorage.setItem('accessToken', data.data.accessToken);
     localStorage.setItem('refreshToken', data.data.refreshToken);
+    sessionStorage.setItem('accessToken', data.data.accessToken);
+    sessionStorage.setItem('refreshToken', data.data.refreshToken);
     return data.data.user;
   } catch (err) {
     return rejectWithValue(err.response?.data?.message || 'Login failed');
@@ -25,7 +27,10 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   try {
     await api.post('/auth/logout');
   } finally {
-    localStorage.clear();
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
   }
 });
 
@@ -35,10 +40,19 @@ const authSlice = createSlice({
     user: null,
     loading: false,
     error: null,
-    isAuthenticated: !!localStorage.getItem('accessToken'),
+    isAuthenticated: !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')),
   },
   reducers: {
     clearError: (state) => { state.error = null; },
+    resetAuth: (state) => {
+      state.user = null;
+      state.isAuthenticated = false;
+      state.error = null;
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      sessionStorage.removeItem('accessToken');
+      sessionStorage.removeItem('refreshToken');
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -59,7 +73,10 @@ const authSlice = createSlice({
       .addCase(getMe.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
-        localStorage.clear();
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
       })
       .addCase(logout.fulfilled, (state) => {
         state.user = null;
@@ -68,5 +85,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError } = authSlice.actions;
+export const { clearError, resetAuth } = authSlice.actions;
 export default authSlice.reducer;

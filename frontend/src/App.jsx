@@ -21,6 +21,7 @@ import Inventory from './pages/admin/Inventory';
 import Employees from './pages/admin/Employees';
 import Reports from './pages/admin/Reports';
 import Settings from './pages/admin/Settings';
+import Restaurants from './pages/admin/Restaurants';
 import POS from './pages/pos/POS';
 import Kitchen from './pages/kitchen/Kitchen';
 import Orders from './pages/orders/Orders';
@@ -36,7 +37,8 @@ const App = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    if (localStorage.getItem('accessToken')) {
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    if (token) {
       dispatch(getMe());
     }
   }, [dispatch]);
@@ -50,9 +52,7 @@ const App = () => {
       </Route>
 
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={
-          isAuthenticated ? <Navigate to={getRoleDashboard(user?.role)} replace /> : <Login />
-        } />
+        <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Route>
@@ -60,7 +60,7 @@ const App = () => {
       <Route element={<ProtectedRoute allowedRoles={STAFF_ROLES} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/admin/dashboard" element={
-            <ProtectedRoute allowedRoles={ADMIN_ROLES}><Dashboard /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={[...ADMIN_ROLES, 'cashier']}><Dashboard /></ProtectedRoute>
           } />
           <Route path="/admin/foods" element={
             <ProtectedRoute allowedRoles={[...ADMIN_ROLES, 'cashier']}><Foods /></ProtectedRoute>
@@ -69,7 +69,7 @@ const App = () => {
             <ProtectedRoute allowedRoles={ADMIN_ROLES}><Categories /></ProtectedRoute>
           } />
           <Route path="/admin/tables" element={
-            <ProtectedRoute allowedRoles={ADMIN_ROLES}><Tables /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={[...ADMIN_ROLES, 'cashier']}><Tables /></ProtectedRoute>
           } />
           <Route path="/admin/customers" element={
             <ProtectedRoute allowedRoles={[...ADMIN_ROLES, 'cashier']}><Customers /></ProtectedRoute>
@@ -84,10 +84,13 @@ const App = () => {
             <ProtectedRoute allowedRoles={ADMIN_ROLES}><Employees /></ProtectedRoute>
           } />
           <Route path="/admin/reports" element={
-            <ProtectedRoute allowedRoles={ADMIN_ROLES}><Reports /></ProtectedRoute>
+            <ProtectedRoute allowedRoles={[...ADMIN_ROLES, 'cashier']}><Reports /></ProtectedRoute>
           } />
           <Route path="/admin/settings" element={
             <ProtectedRoute allowedRoles={['super_admin', 'restaurant_admin']}><Settings /></ProtectedRoute>
+          } />
+          <Route path="/admin/restaurants" element={
+            <ProtectedRoute allowedRoles={['super_admin']}><Restaurants /></ProtectedRoute>
           } />
           <Route path="/pos" element={
             <ProtectedRoute allowedRoles={[...ADMIN_ROLES, 'cashier']}><POS /></ProtectedRoute>
@@ -99,12 +102,8 @@ const App = () => {
         </Route>
       </Route>
 
-      <Route path="/" element={
-        isAuthenticated
-          ? <Navigate to={getRoleDashboard(user?.role)} replace />
-          : <Navigate to="/login" replace />
-      } />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 };

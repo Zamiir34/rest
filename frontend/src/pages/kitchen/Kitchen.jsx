@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiClock, FiAlertCircle, FiLoader, FiPrinter, FiBell, FiX } from 'react-icons/fi';
 import api from '../../services/api';
@@ -83,11 +84,12 @@ const NEXT_STATUS = { pending: 'accepted', accepted: 'preparing', preparing: 're
 const NEXT_LABEL  = { pending: 'Accept', accepted: 'Start Cooking', preparing: 'Mark Ready', ready: 'Served ✓' };
 
 const Kitchen = () => {
+  const { user }                      = useSelector((state) => state.auth);
   const [orders, setOrders]           = useState([]);
   const [loading, setLoading]         = useState(true);
   const [newOrderAlert, setNewOrderAlert] = useState(null);
   const [printOrder, setPrintOrder]   = useState(null);
-  const [settings, setSettings]       = useState({ restaurantName: 'Savory Bites' });
+  const [settings, setSettings]       = useState({ restaurantName: user?.restaurantId?.name || '' });
 
   const fetchOrders = async () => {
     const { data } = await api.get('/orders/kitchen');
@@ -138,7 +140,7 @@ const Kitchen = () => {
   if (loading) return <PageLoader />;
 
   const getByStatus = (status) => orders.filter((o) => o.status === status);
-  const restName = settings.restaurantName || 'Savory Bites';
+  const restName = settings.restaurantName || user?.restaurantId?.name || 'Restaurant POS';
 
   return (
     <div className="space-y-6 animate-fadeIn">
