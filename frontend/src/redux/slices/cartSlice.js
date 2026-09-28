@@ -7,10 +7,16 @@ const cartSlice = createSlice({
     tableNumber: null,
     customerName: '',
     customerPhone: '',
+    restaurant: null,
+    restaurantName: '',
   },
   reducers: {
     setTable: (state, action) => {
       state.tableNumber = action.payload;
+    },
+    setRestaurantInfo: (state, action) => {
+      state.restaurant = action.payload?.restaurantId || action.payload?._id || action.payload?.id || null;
+      state.restaurantName = action.payload?.restaurantName || action.payload?.name || '';
     },
     setCustomerInfo: (state, action) => {
       state.customerName = action.payload.name;
@@ -54,7 +60,7 @@ const cartSlice = createSlice({
 });
 
 export const {
-  setTable, setCustomerInfo, addToCart, updateQuantity,
+  setTable, setRestaurantInfo, setCustomerInfo, addToCart, updateQuantity,
   updateNotes, removeFromCart, clearCart,
 } = cartSlice.actions;
 

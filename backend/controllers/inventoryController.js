@@ -2,7 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const Inventory = require('../models/Inventory');
 const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
-const { createNotification } = require('../services/notificationService');
+const { createNotification, notifyRoles } = require('../services/notificationService');
 
 // Helper: get restaurantId filter based on user role
 const getRestaurantFilter = (user, query) => {
@@ -58,11 +58,10 @@ exports.updateInventory = asyncHandler(async (req, res) => {
   await item.save();
 
   if (item.quantity <= item.minStock) {
-    await createNotification({
+    await notifyRoles(['super_admin', 'restaurant_admin', 'manager'], {
       title: 'Low Stock Alert',
       message: `${item.name} is low (${item.quantity} ${item.unit} remaining)`,
       type: 'inventory',
-      recipientRole: 'manager',
       relatedId: item._id,
       relatedModel: 'Inventory',
       priority: 'high',

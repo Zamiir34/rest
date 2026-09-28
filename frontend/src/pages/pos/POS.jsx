@@ -253,7 +253,7 @@ const POS = () => {
                 {initials}
               </div>
               <div style={{ fontSize: '20px', fontWeight: '900', letterSpacing: '-0.5px', marginBottom: '2px' }}>
-                {restName}
+                {lastPayment.order?.restaurant?.name || lastPayment.order?.restaurantName || restName}
               </div>
               {settings.address && (
                 <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>{settings.address}</div>
@@ -369,7 +369,7 @@ const POS = () => {
             {/* Header */}
             <div style={{ textAlign: 'center', borderBottom: '2px solid #000', paddingBottom: '12px', marginBottom: '12px' }}>
               <div style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '-0.5px' }}>
-                {restName}
+                {slipOrder.restaurant?.name || slipOrder.restaurantName || restName}
               </div>
               <div style={{
                 display: 'inline-block',
@@ -974,8 +974,13 @@ const POS = () => {
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-bold text-gray-900 dark:text-white">{order.orderNumber}</p>
+                        {(order.restaurant?.name || order.restaurantName) && (
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+                            {order.restaurant?.name || order.restaurantName}
+                          </span>
+                        )}
                         {order.status === 'pending' && (
                           <span className="flex h-2 w-2 relative">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>

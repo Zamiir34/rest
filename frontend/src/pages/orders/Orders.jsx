@@ -247,6 +247,7 @@ const Orders = () => {
           <thead>
             <tr>
               <th>Order #</th>
+              <th>Maqaayadda (Restaurant)</th>
               <th>Table</th>
               <th>Customer</th>
               <th>Items</th>
@@ -259,7 +260,7 @@ const Orders = () => {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
             {orders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-slate-400">
+                <td colSpan={9} className="text-center py-12 text-slate-400">
                   <div className="flex flex-col items-center justify-center">
                     <FiShoppingBag className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-2 stroke-[1.5]" />
                     <p className="font-semibold text-sm">No orders found</p>
@@ -290,6 +291,14 @@ const Orders = () => {
                           )}
                         </button>
                       </div>
+                    </td>
+
+                    {/* Restaurant */}
+                    <td>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 whitespace-nowrap">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                        {order.restaurant?.name || order.restaurantName || 'Restaurant'}
+                      </span>
                     </td>
 
                     {/* Table */}
@@ -431,14 +440,20 @@ const Orders = () => {
               {/* Modal Body */}
               <div className="px-6 pb-5 space-y-4 overflow-y-auto">
                 {/* Meta chips */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Maqaayadda</p>
+                    <p className="font-bold text-xs sm:text-sm text-amber-700 dark:text-amber-300 truncate" title={selectedOrder.restaurant?.name || selectedOrder.restaurantName || 'Restaurant'}>
+                      {selectedOrder.restaurant?.name || selectedOrder.restaurantName || 'Restaurant'}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Table</p>
                     <p className="font-bold text-sm text-gray-900 dark:text-white">
                       {selectedOrder.tableNumber ? `Table ${selectedOrder.tableNumber}` : 'Walk-in'}
                     </p>
                   </div>
-                  <div className="p-3.5 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                  <div className="p-3 rounded-2xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Customer</p>
                     <p className="font-bold text-sm text-gray-900 dark:text-white truncate">
                       {selectedOrder.customerName || 'Guest'}

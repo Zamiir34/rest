@@ -390,6 +390,11 @@ const OrderTracking = () => {
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-xs ${heroInfo.pill}`}>
                   {heroInfo.badge}
                 </span>
+                {(order.restaurant?.name || order.restaurantName) && (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-400/30 shadow-xs">
+                    🏪 {order.restaurant?.name || order.restaurantName}
+                  </span>
+                )}
                 {order.tableNumber && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs">
                     <FiMapPin className="w-3 h-3 text-primary-400" />
@@ -611,8 +616,15 @@ const OrderTracking = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between text-xs text-slate-400 pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800">
-            <span>Placed on {formatDateTime(order.createdAt)}</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-400 pt-3.5 mt-3 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <span>Placed on {formatDateTime(order.createdAt)}</span>
+              {(order.restaurant?.name || order.restaurantName) && (
+                <span className="font-semibold text-slate-700 dark:text-slate-300">
+                  · 🏪 {order.restaurant?.name || order.restaurantName}
+                </span>
+              )}
+            </div>
             {order.customerName && <span>Customer: <b>{order.customerName}</b></span>}
           </div>
         </div>

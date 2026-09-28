@@ -3,7 +3,7 @@ const Payment = require('../models/Payment');
 const Order = require('../models/Order');
 const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
-const { createNotification } = require('../services/notificationService');
+const { notifyRoles } = require('../services/notificationService');
 
 exports.getPayments = asyncHandler(async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
@@ -38,11 +38,10 @@ exports.processPayment = asyncHandler(async (req, res) => {
   order.completedAt = new Date();
   await order.save();
 
-  await createNotification({
+  await notifyRoles(['super_admin', 'restaurant_admin', 'manager', 'cashier'], {
     title: 'Payment Received',
     message: `Payment of $${payment.amount} for ${order.orderNumber}`,
     type: 'payment',
-    recipientRole: 'manager',
     relatedId: payment._id,
     relatedModel: 'Payment',
   });

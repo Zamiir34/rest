@@ -164,7 +164,7 @@ const seed = async () => {
     }
 
     // 5. Restaurant 1: Categories, Foods, Tables
-    const catNames1 = ['Breakfast', 'Lunch', 'Dinner', 'Drinks', 'Desserts', 'Fast Food', 'Seafood'];
+    const catNames1 = ['Breakfast', 'Lunch', 'Dinner', 'Drinks', 'Fast Food', 'Seafood', 'Coffee & Sweeties'];
     const categoryDocs1 = [];
     for (let i = 0; i < catNames1.length; i++) {
       const doc = await Category.create({ name: catNames1[i], sortOrder: i, restaurant: restaurant1._id });
@@ -181,10 +181,18 @@ const seed = async () => {
       { name: 'Fish & Chips', price: 13.99, category: catMap1.Seafood, description: 'Classic battered fish with fries', restaurant: restaurant1._id },
       { name: 'Classic Burger', price: 10.99, category: catMap1['Fast Food'], isPopular: true, description: 'Beef patty with cheese and fries', restaurant: restaurant1._id },
       { name: 'Margherita Pizza', price: 11.99, category: catMap1['Fast Food'], description: 'Tomato, mozzarella, basil', restaurant: restaurant1._id },
-      { name: 'Chocolate Lava Cake', price: 7.99, category: catMap1.Desserts, isFeatured: true, description: 'Warm chocolate cake with molten center', restaurant: restaurant1._id },
+      { name: 'Chocolate Lava Cake', price: 7.99, category: catMap1['Coffee & Sweeties'], isFeatured: true, description: 'Warm chocolate cake with molten center', restaurant: restaurant1._id },
       { name: 'Fresh Mango Smoothie', price: 5.99, category: catMap1.Drinks, description: 'Blended fresh mango', restaurant: restaurant1._id },
       { name: 'Espresso', price: 3.49, category: catMap1.Drinks, description: 'Double shot espresso', restaurant: restaurant1._id },
       { name: 'Iced Latte', price: 4.99, category: catMap1.Drinks, description: 'Espresso with cold milk over ice', restaurant: restaurant1._id },
+      // Coffee & Sweeties
+      { name: 'Cappuccino', price: 4.49, category: catMap1['Coffee & Sweeties'], isPopular: true, description: 'Creamy espresso topped with steamed milk foam', restaurant: restaurant1._id },
+      { name: 'Caramel Macchiato', price: 5.49, category: catMap1['Coffee & Sweeties'], isFeatured: true, description: 'Vanilla latte with rich caramel drizzle', restaurant: restaurant1._id },
+      { name: 'Mocha Frappuccino', price: 5.99, category: catMap1['Coffee & Sweeties'], description: 'Blended coffee with chocolate and whipped cream', restaurant: restaurant1._id },
+      { name: 'Turkish Coffee', price: 3.99, category: catMap1['Coffee & Sweeties'], isPopular: true, description: 'Bold and rich traditionally brewed Turkish coffee', restaurant: restaurant1._id },
+      { name: 'Chocolate Brownie', price: 4.99, category: catMap1['Coffee & Sweeties'], isFeatured: true, description: 'Fudgy chocolate brownie with powdered sugar', restaurant: restaurant1._id },
+      { name: 'Cinnamon Roll', price: 3.99, category: catMap1['Coffee & Sweeties'], description: 'Soft baked roll with cinnamon and cream cheese glaze', restaurant: restaurant1._id },
+      { name: 'Macarons (6 pcs)', price: 7.99, category: catMap1['Coffee & Sweeties'], isPopular: true, description: 'Assorted French macarons in various flavors', restaurant: restaurant1._id },
     ];
 
     const FOOD_IMAGES1 = {
@@ -200,6 +208,13 @@ const seed = async () => {
       'Fresh Mango Smoothie': 'https://images.unsplash.com/photo-1623065422902-30a2d299bbe4?auto=format&fit=crop&w=600&q=80',
       'Espresso': 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?auto=format&fit=crop&w=600&q=80',
       'Iced Latte': 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80',
+      'Cappuccino': 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80',
+      'Caramel Macchiato': 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=600&q=80',
+      'Mocha Frappuccino': 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?auto=format&fit=crop&w=600&q=80',
+      'Turkish Coffee': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
+      'Chocolate Brownie': 'https://images.unsplash.com/photo-1564355808539-22fda35bed7e?auto=format&fit=crop&w=600&q=80',
+      'Cinnamon Roll': 'https://images.unsplash.com/photo-1609428927473-d517915f46f6?auto=format&fit=crop&w=600&q=80',
+      'Macarons (6 pcs)': 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80',
     };
 
     const createdFoods1 = await Food.insertMany(
@@ -237,6 +252,7 @@ const seed = async () => {
       ],
       subtotal: 41.96, tax: 2.10, total: 44.06, status: 'completed', paymentStatus: 'paid',
       restaurant: restaurant1._id,
+      restaurantName: restaurant1.name,
     });
 
     await Order.create({
@@ -246,10 +262,11 @@ const seed = async () => {
       items: [{ food: createdFoods1[3]._id, name: createdFoods1[3].name, price: createdFoods1[3].price, quantity: 1, subtotal: createdFoods1[3].price }],
       subtotal: 24.99, tax: 1.25, total: 26.24, status: 'ready', paymentStatus: 'paid',
       restaurant: restaurant1._id,
+      restaurantName: restaurant1.name,
     });
 
     // 6. Restaurant 2: Categories, Foods, Tables
-    const catNames2 = ['Somali Dishes', 'Grills', 'Soups', 'Beverages', 'Desserts'];
+    const catNames2 = ['Somali Dishes', 'Grills', 'Soups', 'Beverages', 'Coffee & Sweeties'];
     const categoryDocs2 = [];
     for (let i = 0; i < catNames2.length; i++) {
       const doc = await Category.create({ name: catNames2[i], sortOrder: i, restaurant: restaurant2._id });
@@ -267,7 +284,15 @@ const seed = async () => {
       { name: 'Vegetable Soup', price: 7.00, category: catMap2.Soups, description: 'Fresh seasonal vegetables in broth', restaurant: restaurant2._id },
       { name: 'Camel Milk Tea (Shaah)', price: 3.50, category: catMap2.Beverages, isPopular: true, description: 'Traditional spiced Somali tea with camel milk', restaurant: restaurant2._id },
       { name: 'Fresh Tamarind Juice', price: 4.00, category: catMap2.Beverages, description: 'Refreshing homemade tamarind drink', restaurant: restaurant2._id },
-      { name: 'Bur (Somali Donuts)', price: 5.00, category: catMap2.Desserts, isFeatured: true, description: 'Sweet deep-fried dough balls with honey', restaurant: restaurant2._id },
+      // Coffee & Sweeties
+      { name: 'Bur (Somali Donuts)', price: 5.00, category: catMap2['Coffee & Sweeties'], isFeatured: true, description: 'Sweet deep-fried dough balls with honey', restaurant: restaurant2._id },
+      { name: 'Somali Spiced Coffee', price: 3.50, category: catMap2['Coffee & Sweeties'], isPopular: true, description: 'Cardamom-spiced black coffee, a Somali classic', restaurant: restaurant2._id },
+      { name: 'Hazelnut Latte', price: 4.99, category: catMap2['Coffee & Sweeties'], description: 'Smooth latte with hazelnut syrup and steamed milk', restaurant: restaurant2._id },
+      { name: 'Cold Brew Coffee', price: 5.50, category: catMap2['Coffee & Sweeties'], isFeatured: true, description: 'Slow-steeped cold brew, served over ice', restaurant: restaurant2._id },
+      { name: 'Baklava (3 pcs)', price: 6.00, category: catMap2['Coffee & Sweeties'], isPopular: true, description: 'Flaky pastry layered with nuts and honey syrup', restaurant: restaurant2._id },
+      { name: 'Halwa Somaliyeed', price: 4.50, category: catMap2['Coffee & Sweeties'], isFeatured: true, description: 'Traditional Somali sweet halwa with ghee and cardamom', restaurant: restaurant2._id },
+      { name: 'Date & Nut Energy Ball', price: 3.00, category: catMap2['Coffee & Sweeties'], description: 'Healthy sweet bites made from dates, nuts, and coconut', restaurant: restaurant2._id },
+      { name: 'Vanilla Bean Cheesecake', price: 6.50, category: catMap2['Coffee & Sweeties'], isPopular: true, description: 'Creamy cheesecake on a buttery biscuit base', restaurant: restaurant2._id },
     ];
 
     const FOOD_IMAGES2 = {
@@ -281,6 +306,13 @@ const seed = async () => {
       'Camel Milk Tea (Shaah)': 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=600&q=80',
       'Fresh Tamarind Juice': 'https://images.unsplash.com/photo-1543253687-c931c8e01820?auto=format&fit=crop&w=600&q=80',
       'Bur (Somali Donuts)': 'https://images.unsplash.com/photo-1551024601-bec78aea704b?auto=format&fit=crop&w=600&q=80',
+      'Somali Spiced Coffee': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
+      'Hazelnut Latte': 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?auto=format&fit=crop&w=600&q=80',
+      'Cold Brew Coffee': 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80',
+      'Baklava (3 pcs)': 'https://images.unsplash.com/photo-1519676867240-f03562e64548?auto=format&fit=crop&w=600&q=80',
+      'Halwa Somaliyeed': 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&w=600&q=80',
+      'Date & Nut Energy Ball': 'https://images.unsplash.com/photo-1559622214-f8a9850965bb?auto=format&fit=crop&w=600&q=80',
+      'Vanilla Bean Cheesecake': 'https://images.unsplash.com/photo-1508737027454-e6454ef45afd?auto=format&fit=crop&w=600&q=80',
     };
 
     const createdFoods2 = await Food.insertMany(
@@ -317,6 +349,7 @@ const seed = async () => {
       ],
       subtotal: 43.00, tax: 2.15, total: 45.15, status: 'completed', paymentStatus: 'paid',
       restaurant: restaurant2._id,
+      restaurantName: restaurant2.name,
     });
 
     await Order.create({
@@ -325,6 +358,7 @@ const seed = async () => {
       items: [{ food: createdFoods2[3]._id, name: createdFoods2[3].name, price: createdFoods2[3].price, quantity: 1, subtotal: createdFoods2[3].price }],
       subtotal: 22.00, tax: 1.10, total: 23.10, status: 'preparing', paymentStatus: 'unpaid',
       restaurant: restaurant2._id,
+      restaurantName: restaurant2.name,
     });
 
     // 7. Suppliers & Inventory
@@ -353,8 +387,8 @@ const seed = async () => {
     console.log('  Cashier:              cashier@restaurant.com / cashier123');
     console.log('  Waiter:               waiter@restaurant.com / waiter123');
     console.log('\nRestaurants:');
-    console.log('  1. Savory Bites Restaurant (Mogadishu) - Active [Enterprise] - 12 foods, 7 cats, 10 tables');
-    console.log('  2. Somali Flavors & Grill (Hargeisa) - Active [Pro] - 10 foods, 5 cats, 8 tables');
+    console.log('  1. Savory Bites Restaurant (Mogadishu) - Active [Enterprise] - 19 foods, 7 cats, 10 tables');
+    console.log('  2. Somali Flavors & Grill (Hargeisa) - Active [Pro] - 17 foods, 5 cats, 8 tables');
     console.log('  3. Ocean Breeze Seafood Cafe (Kismayo) - Suspended [Basic]');
 
     process.exit(0);

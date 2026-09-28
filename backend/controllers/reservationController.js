@@ -3,7 +3,7 @@ const Reservation = require('../models/Reservation');
 const Table = require('../models/Table');
 const ApiError = require('../utils/ApiError');
 const { getPagination, paginateResponse } = require('../utils/pagination');
-const { createNotification } = require('../services/notificationService');
+const { createNotification, notifyRoles } = require('../services/notificationService');
 
 // Helper: get restaurantId filter based on user role
 const getRestaurantFilter = (user, query) => {
@@ -54,11 +54,10 @@ exports.createReservation = asyncHandler(async (req, res) => {
     await Table.findByIdAndUpdate(reservation.table, { status: 'reserved' });
   }
 
-  await createNotification({
+  await notifyRoles(['super_admin', 'restaurant_admin', 'manager', 'waiter'], {
     title: 'New Reservation',
     message: `${reservation.customerName} - ${reservation.guests} guests on ${reservation.date}`,
     type: 'reservation',
-    recipientRole: 'manager',
     relatedId: reservation._id,
     relatedModel: 'Reservation',
   });

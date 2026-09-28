@@ -3,6 +3,7 @@ const Food = require('../models/Food');
 const Customer = require('../models/Customer');
 const Table = require('../models/Table');
 const Settings = require('../models/Settings');
+const Restaurant = require('../models/Restaurant');
 const ApiError = require('../utils/ApiError');
 const { createNotification, notifyRoles } = require('./notificationService');
 
@@ -16,7 +17,6 @@ const calculateTotals = (items, discount = 0, taxRate = 5) => {
 };
 
 const createOrder = async (orderData, io) => {
-  const settings = (await Settings.findOne()) || { taxRate: 5 };
   const items = [];
 
   for (const item of orderData.items) {
@@ -46,19 +46,45 @@ const createOrder = async (orderData, io) => {
     }
   }
 
+  // Resolve restaurant and restaurantName
+  let restaurant = null;
+  if (orderData.restaurant) {
+    restaurant = await Restaurant.findById(orderData.restaurant);
+  }
+  if (!restaurant && table && table.restaurant) {
+    restaurant = await Restaurant.findById(table.restaurant);
+  }
+  if (!restaurant && items.length > 0) {
+    const firstFood = await Food.findById(items[0].food);
+    if (firstFood && firstFood.restaurant) {
+      restaurant = await Restaurant.findById(firstFood.restaurant);
+    }
+  }
+
+  const restaurantId = restaurant?._id || orderData.restaurant || null;
+  const restaurantName = restaurant?.name || orderData.restaurantName || '';
+
+  const settings = (restaurantId ? await Settings.findOne({ restaurant: restaurantId }) : null) ||
+    (await Settings.findOne()) || { taxRate: restaurant?.taxRate || 5 };
+
   let customer = null;
   if (orderData.customerPhone) {
-    customer = await Customer.findOne({ phone: orderData.customerPhone });
+    customer = await Customer.findOne({
+      phone: orderData.customerPhone,
+      ...(restaurantId ? { restaurant: restaurantId } : {}),
+    });
     if (!customer) {
       customer = await Customer.create({
         name: orderData.customerName,
         phone: orderData.customerPhone,
+        restaurant: restaurantId,
       });
     }
   } else if (orderData.customerName) {
     customer = await Customer.create({
       name: orderData.customerName,
       phone: orderData.customerPhone,
+      restaurant: restaurantId,
     });
   }
 
@@ -75,6 +101,8 @@ const createOrder = async (orderData, io) => {
     ...totals,
     notes: orderData.notes,
     createdBy: orderData.createdBy,
+    restaurant: restaurantId,
+    restaurantName: restaurantName,
   });
 
   if (customer) {
@@ -86,11 +114,12 @@ const createOrder = async (orderData, io) => {
 
   const populated = await Order.findById(order._id)
     .populate('table')
-    .populate('items.food');
+    .populate('items.food')
+    .populate('restaurant', 'name code currency phone address logo');
 
-  await notifyRoles(['chef', 'manager', 'cashier'], {
+  await notifyRoles(['super_admin', 'restaurant_admin', 'manager', 'chef', 'cashier'], {
     title: 'New Order',
-    message: `Order ${order.orderNumber} from ${orderData.tableNumber || 'Walk-in'}`,
+    message: `Order ${order.orderNumber} from ${orderData.tableNumber || 'Walk-in'} (${restaurantName || 'Restaurant'})`,
     type: 'order',
     relatedId: order._id,
     relatedModel: 'Order',
@@ -118,7 +147,8 @@ const updateOrderStatus = async (orderId, status, userId, io) => {
 
   const populated = await Order.findById(orderId)
     .populate('table')
-    .populate('items.food');
+    .populate('items.food')
+    .populate('restaurant', 'name code currency phone address logo');
 
   if (io) {
     io.emit('order_status_updated', populated);
@@ -129,11 +159,10 @@ const updateOrderStatus = async (orderId, status, userId, io) => {
   }
 
   if (status === 'ready') {
-    await createNotification({
+    await notifyRoles(['super_admin', 'restaurant_admin', 'manager', 'waiter'], {
       title: 'Order Ready',
       message: `Order ${order.orderNumber} is ready to serve`,
       type: 'order',
-      recipientRole: 'waiter',
       relatedId: order._id,
       relatedModel: 'Order',
     });

@@ -34,13 +34,18 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   }
 });
 
+// Token exists in storage? We're initializing (waiting for getMe to verify)
+const hasStoredToken = !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken'));
+
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
     user: null,
     loading: false,
     error: null,
-    isAuthenticated: !!(localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')),
+    isAuthenticated: hasStoredToken,
+    // true while we're verifying the stored token on first load
+    initializing: hasStoredToken,
   },
   reducers: {
     clearError: (state) => { state.error = null; },
@@ -66,13 +71,18 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(getMe.pending, (state) => {
+        // keep initializing = true while the first token check is in flight
+      })
       .addCase(getMe.fulfilled, (state, action) => {
         state.user = action.payload;
         state.isAuthenticated = true;
+        state.initializing = false;
       })
       .addCase(getMe.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
+        state.initializing = false;
         sessionStorage.removeItem('accessToken');
         sessionStorage.removeItem('refreshToken');
         localStorage.removeItem('accessToken');

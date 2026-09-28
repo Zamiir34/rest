@@ -82,7 +82,8 @@ const getDashboardStats = async (period = 'daily', restaurantId = null) => {
   const recentOrders = await Order.find(restFilter)
     .sort({ createdAt: -1 })
     .limit(10)
-    .populate('table');
+    .populate('table')
+    .populate('restaurant', 'name code');
 
   return {
     revenue,

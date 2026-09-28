@@ -4,7 +4,7 @@ import { FiDollarSign, FiShoppingBag, FiUsers, FiAlertTriangle } from 'react-ico
 import { Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale, PointElement,
-  LineElement, ArcElement, Title, Tooltip, Legend,
+  LineElement, ArcElement, Title, Tooltip, Legend, Filler,
 } from 'chart.js';
 import api from '../../services/api';
 import { PageLoader } from '../../components/LoadingSpinner';
@@ -13,7 +13,7 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/Badge';
 import { formatCurrency, formatDateTime, STATUS_COLORS } from '../../utils/constants';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ArcElement, Title, Tooltip, Legend, Filler);
 
 const StatCard = ({ icon: Icon, label, value, gradient, delay }) => (
   <motion.div
@@ -180,7 +180,14 @@ const Dashboard = () => {
             {stats?.recentOrders?.map((order) => (
               <div key={order._id} className="flex justify-between items-center gap-4 py-2.5 border-b border-slate-100 dark:border-slate-800 last:border-0">
                 <div>
-                  <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{order.orderNumber}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-sm text-slate-800 dark:text-slate-200">{order.orderNumber}</p>
+                    {(order.restaurant?.name || order.restaurantName) && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+                        {order.restaurant?.name || order.restaurantName}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-400 mt-0.5">{formatDateTime(order.createdAt)}</p>
                 </div>
                 <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[order.status]}`}>

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { FiShoppingCart } from 'react-icons/fi';
 import api from '../../services/api';
-import { setTable, addToCart } from '../../redux/slices/cartSlice';
+import { setTable, setRestaurantInfo, addToCart } from '../../redux/slices/cartSlice';
 import { selectCartCount } from '../../redux/slices/cartSlice';
 import Badge from '../../components/Badge';
 import SearchInput from '../../components/SearchInput';
@@ -30,7 +30,11 @@ const CustomerMenu = () => {
       api.get('/categories'),
       api.get(`/foods?isAvailable=true&limit=50`),
     ]).then(([tableRes, catRes, foodRes]) => {
-      setTableData(tableRes.data.data);
+      const tableObj = tableRes.data.data;
+      setTableData(tableObj);
+      if (tableObj?.restaurant) {
+        dispatch(setRestaurantInfo(tableObj.restaurant));
+      }
       setCategories(catRes.data.data);
       setFoods(foodRes.data.data);
       setLoading(false);
@@ -42,6 +46,8 @@ const CustomerMenu = () => {
     const matchCat = !category || f.category?._id === category || f.category === category;
     return matchSearch && matchCat;
   });
+
+  const restaurantName = table?.restaurant?.name || 'Restaurant';
 
   if (loading) return (
     <div className="p-4 space-y-4">
@@ -61,7 +67,7 @@ const CustomerMenu = () => {
               🍽️
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Savory Bites</h1>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">{restaurantName}</h1>
               <p className="text-xs font-semibold text-primary-600">Table {tableNumber}</p>
             </div>
           </div>

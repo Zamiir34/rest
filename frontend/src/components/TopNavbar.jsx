@@ -86,7 +86,8 @@ const TopNavbar = () => {
 
     const handleNewOrder = (order) => {
       playNotificationSound();
-      setUnread((prev) => prev + 1);
+      fetchUnread();
+      fetchNotifs();
 
       const id = Date.now();
       setToasts((prev) => [
@@ -94,6 +95,7 @@ const TopNavbar = () => {
           id,
           title: '🍽️ Order Cusub Soo Galay!',
           orderNumber: order.orderNumber,
+          restaurantName: order.restaurant?.name || order.restaurantName || '',
           table: order.tableNumber ? `Table ${order.tableNumber}` : 'Walk-in',
           items: order.items?.length ?? 0,
           total: order.total,
@@ -106,8 +108,22 @@ const TopNavbar = () => {
       }, 10000);
     };
 
+    const handleRefreshNotifs = () => {
+      fetchUnread();
+      fetchNotifs();
+    };
+
     socket.on('new_order', handleNewOrder);
-    return () => { socket.off('new_order', handleNewOrder); };
+    socket.on('order_status_updated', handleRefreshNotifs);
+    socket.on('new_reservation', handleRefreshNotifs);
+    socket.on('low_stock_alert', handleRefreshNotifs);
+
+    return () => {
+      socket.off('new_order', handleNewOrder);
+      socket.off('order_status_updated', handleRefreshNotifs);
+      socket.off('new_reservation', handleRefreshNotifs);
+      socket.off('low_stock_alert', handleRefreshNotifs);
+    };
   }, []);
 
   /* ── close panel on outside click ──────────────────────────────────── */
@@ -123,7 +139,10 @@ const TopNavbar = () => {
 
   const openPanel = () => {
     setPanelOpen((prev) => {
-      if (!prev) fetchNotifs();
+      if (!prev) {
+        fetchNotifs();
+        fetchUnread(); // re-sync count from DB each time panel opens
+      }
       return !prev;
     });
   };
@@ -363,6 +382,11 @@ const TopNavbar = () => {
 
                 {/* Pills */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {toast.restaurantName && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/25 border border-amber-300/30 text-amber-100 text-[11px] font-bold">
+                      🏪 {toast.restaurantName}
+                    </span>
+                  )}
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/15 text-white text-[11px] font-bold">
                     <FiShoppingBag size={11} /> {toast.table}
                   </span>

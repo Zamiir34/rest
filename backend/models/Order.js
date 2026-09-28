@@ -53,6 +53,7 @@ const orderSchema = new mongoose.Schema(
     },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     restaurant: { type: mongoose.Schema.Types.ObjectId, ref: 'Restaurant', index: true },
+    restaurantName: { type: String, trim: true },
     completedAt: { type: Date },
   },
   { timestamps: true }

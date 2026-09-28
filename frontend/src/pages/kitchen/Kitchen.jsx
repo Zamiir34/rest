@@ -178,7 +178,9 @@ const Kitchen = () => {
             color: '#111',
           }}>
             <div style={{ textAlign: 'center', borderBottom: '2px solid #000', paddingBottom: '10px', marginBottom: '10px' }}>
-              <div style={{ fontSize: '18px', fontWeight: '900' }}>{restName}</div>
+              <div style={{ fontSize: '18px', fontWeight: '900' }}>
+                {printOrder.restaurant?.name || printOrder.restaurantName || restName}
+              </div>
               <div style={{ fontSize: '13px', fontWeight: '900', letterSpacing: '1px', marginTop: '4px' }}>
                 KITCHEN ORDER TICKET (KOT)
               </div>
@@ -325,9 +327,16 @@ const Kitchen = () => {
                     <div className={`h-1 ${col.bar}`} />
                     <div className="p-4 space-y-3">
                       {/* Order number & table */}
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-gray-900 dark:text-white">{order.orderNumber}</span>
-                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-black text-gray-900 dark:text-white">{order.orderNumber}</span>
+                          {(order.restaurant?.name || order.restaurantName) && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/60 dark:border-amber-800/60">
+                              {order.restaurant?.name || order.restaurantName}
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 shrink-0">
                           {order.tableNumber || 'Walk-in'}
                         </span>
                       </div>

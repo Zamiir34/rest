@@ -31,6 +31,7 @@ exports.getOrders = asyncHandler(async (req, res) => {
       { orderNumber: { $regex: req.query.search, $options: 'i' } },
       { customerName: { $regex: req.query.search, $options: 'i' } },
       { tableNumber: { $regex: req.query.search, $options: 'i' } },
+      { restaurantName: { $regex: req.query.search, $options: 'i' } },
     ];
   }
 
@@ -38,6 +39,7 @@ exports.getOrders = asyncHandler(async (req, res) => {
     Order.find(filter)
       .populate('table')
       .populate('items.food')
+      .populate('restaurant', 'name code currency phone address logo')
       .sort('-createdAt')
       .skip(skip)
       .limit(limit),
@@ -51,7 +53,8 @@ exports.getOrder = asyncHandler(async (req, res) => {
   const order = await Order.findById(req.params.id)
     .populate('table')
     .populate('items.food')
-    .populate('customer');
+    .populate('customer')
+    .populate('restaurant', 'name code currency phone address logo');
   if (!order) throw new ApiError(404, 'Order not found');
   res.json({ success: true, data: order });
 });
@@ -89,6 +92,7 @@ exports.getKitchenOrders = asyncHandler(async (req, res) => {
   const orders = await Order.find(filter)
     .populate('table')
     .populate('items.food')
+    .populate('restaurant', 'name code currency phone address logo')
     .sort('createdAt');
   res.json({ success: true, data: orders });
 });

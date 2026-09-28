@@ -32,7 +32,7 @@ import { getFoodImageUrl, handleImageError } from '../../utils/imageUtils';
 const Cart = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { items, tableNumber, customerName, customerPhone } = useSelector((state) => state.cart);
+  const { items, tableNumber, customerName, customerPhone, restaurant, restaurantName } = useSelector((state) => state.cart);
   const total = useSelector(selectCartTotal);
   const count = useSelector(selectCartCount);
 
@@ -77,6 +77,8 @@ const Cart = () => {
         tableNumber: currentTable,
         customerName: name.trim(),
         customerPhone: phone.trim(),
+        restaurant: restaurant || undefined,
+        restaurantName: restaurantName || undefined,
         items: items.map((i) => ({
           food: i.food._id,
           name: i.food.name,
